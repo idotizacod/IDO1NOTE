@@ -1,7 +1,7 @@
 package com.example.quick_note_widget;
 
 import android.content.SharedPreferences;
-import android.os.Bundle;
+import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.plugin.common.MethodChannel;
 
@@ -11,27 +11,31 @@ public class MainActivity extends FlutterActivity {
     private static final String KEY_NOTE_CONTENT = "note_content";
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        
-        new MethodChannel(getFlutterEngine().getDartExecutor().getBinaryMessenger(), CHANNEL)
+    public void configureFlutterEngine(FlutterEngine flutterEngine) {
+        super.configureFlutterEngine(flutterEngine);
+        new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL)
             .setMethodCallHandler((call, result) -> {
-                if (call.method.equals("saveNote")) {
+                if ("saveNote".equals(call.method)) {
                     String content = call.argument("content");
                     saveNote(content);
                     result.success(null);
-                } else if (call.method.equals("loadNote")) {
-                    String content = loadNote();
-                    result.success(content);
+                } else if ("loadNote".equals(call.method)) {
+                    result.success(loadNote());
                 } else {
                     result.notImplemented();
                 }
             });
     }
 
+    @Override
+    protected void onPause() {
+        Ido1NoteWidgetProvider.notifyWidgetUpdate(this);
+        super.onPause();
+    }
+
     private void saveNote(String content) {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        prefs.edit().putString(KEY_NOTE_CONTENT, content).apply();
+        prefs.edit().putString(KEY_NOTE_CONTENT, content == null ? "" : content).apply();
         Ido1NoteWidgetProvider.notifyWidgetUpdate(this);
     }
 

@@ -58,9 +58,8 @@ public class Ido1NoteWidgetProvider extends AppWidgetProvider {
             views.setTextViewText(R.id.widget_content, displayText);
         }
 
-        Intent intent = new Intent(context, MainActivity.class);
-        intent.setAction(Intent.ACTION_MAIN);
-        intent.addCategory(Intent.CATEGORY_LAUNCHER);
+        Intent intent = new Intent(context, QuickNoteInputActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         android.app.PendingIntent pendingIntent = android.app.PendingIntent.getActivity(
             context, 0, intent, 
             android.app.PendingIntent.FLAG_UPDATE_CURRENT | android.app.PendingIntent.FLAG_IMMUTABLE
