@@ -1,30 +1,43 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:quick_note_widget/main.dart';
+import 'package:ido1note/main.dart';
+
+const MethodChannel _widgetChannel = MethodChannel('ido1note/widget');
+
+void _mockWidgetChannel(WidgetTester tester) {
+  tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+    _widgetChannel,
+    (MethodCall call) async => null,
+  );
+}
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('IDO1NOTE muestra el editor de nota vacío', (WidgetTester tester) async {
+    _mockWidgetChannel(tester);
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpWidget(const QuickNoteApp());
+    await tester.pumpAndSettle();
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    expect(find.text('IDO1NOTE'), findsOneWidget);
+    expect(find.text('ESCRIBE TU NOTA...'), findsOneWidget);
+    expect(find.text('VACÍO'), findsOneWidget);
+    expect(find.byType(TextField), findsOneWidget);
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  testWidgets('escribir una nota activa el estado', (WidgetTester tester) async {
+    _mockWidgetChannel(tester);
+
+    await tester.pumpWidget(const QuickNoteApp());
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'hola ido1note');
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ACTIVO'), findsOneWidget);
+    expect(find.text('VACÍO'), findsNothing);
   });
 }

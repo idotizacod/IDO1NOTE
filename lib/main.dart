@@ -108,6 +108,12 @@ class QuickNoteApp extends StatelessWidget {
           color: usGrid,
           thickness: 1,
         ),
+        scrollbarTheme: ScrollbarThemeData(
+          thumbColor: WidgetStateProperty.all(usAccent),
+          radius: const Radius.circular(2),
+          thickness: WidgetStateProperty.all(4),
+          interactive: true,
+        ),
       );
 
   ThemeData get _darkTheme => ThemeData(
@@ -183,6 +189,12 @@ class QuickNoteApp extends StatelessWidget {
           color: Color(0xFF2A2A2A),
           thickness: 1,
         ),
+        scrollbarTheme: ScrollbarThemeData(
+          thumbColor: WidgetStateProperty.all(usAccent),
+          radius: const Radius.circular(2),
+          thickness: WidgetStateProperty.all(4),
+          interactive: true,
+        ),
       );
 
   OutlineInputBorder _border([Color? color, double width = 1]) => OutlineInputBorder(
@@ -200,6 +212,7 @@ class NoteScreen extends StatefulWidget {
 
 class _NoteScreenState extends State<NoteScreen> with SingleTickerProviderStateMixin {
   final TextEditingController _controller = TextEditingController();
+  final ScrollController _editorScrollController = ScrollController();
   bool _isLoading = true;
   late AnimationController _knobController;
   bool _hasContent = false;
@@ -259,6 +272,9 @@ class _NoteScreenState extends State<NoteScreen> with SingleTickerProviderStateM
     _controller.clear();
     _saveNote();
     _knobController.reverse();
+    if (_editorScrollController.hasClients) {
+      _editorScrollController.jumpTo(0);
+    }
     HapticFeedback.lightImpact();
   }
 
@@ -266,6 +282,7 @@ class _NoteScreenState extends State<NoteScreen> with SingleTickerProviderStateM
   void dispose() {
     _saveNote();
     _controller.dispose();
+    _editorScrollController.dispose();
     _knobController.dispose();
     super.dispose();
   }
@@ -318,19 +335,26 @@ class _NoteScreenState extends State<NoteScreen> with SingleTickerProviderStateM
                   border: Border.all(color: borderColor),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: TextField(
-                  controller: _controller,
-                  maxLines: null,
-                  expands: true,
-                  textAlignVertical: TextAlignVertical.top,
-                  style: _usFont(size: 15, height: 1.6, color: textColor),
-                  decoration: InputDecoration(
-                    hintText: _hasContent ? null : 'ESCRIBE TU NOTA...',
-                    hintStyle: _usFont(size: 13, letterSpacing: 0.04, color: mutedColor),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.all(16),
+                child: Scrollbar(
+                  controller: _editorScrollController,
+                  radius: const Radius.circular(2),
+                  child: TextField(
+                    controller: _controller,
+                    keyboardType: TextInputType.multiline,
+                    maxLines: null,
+                    expands: true,
+                    scrollController: _editorScrollController,
+                    scrollPhysics: const AlwaysScrollableScrollPhysics(),
+                    textAlignVertical: TextAlignVertical.top,
+                    style: _usFont(size: 15, height: 1.6, color: textColor),
+                    decoration: InputDecoration(
+                      hintText: _hasContent ? null : 'ESCRIBE TU NOTA...',
+                      hintStyle: _usFont(size: 13, letterSpacing: 0.04, color: mutedColor),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.all(16),
+                    ),
+                    onChanged: (_) => _saveNote(),
                   ),
-                  onChanged: (_) => _saveNote(),
                 ),
               ),
             ),
@@ -481,7 +505,6 @@ class _DisplayBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bgColor = isDark ? usDark : usDisplay;
-    final textColor = isDark ? const Color(0xFFE2E8F0) : usCanvas;
     final labelColor = isDark ? const Color(0xFF888888) : const Color(0xFF888888);
     final borderColor = isDark ? const Color(0xFF1A1A1A) : usText;
 
@@ -589,7 +612,7 @@ class _FooterStats extends StatelessWidget {
   Widget build(BuildContext context) {
     final textColor = isDark ? const Color(0xFF888888) : const Color(0xFF888888);
     final borderColor = isDark ? const Color(0xFF2A2A2A) : usGrid;
-    final accentText = usAccent;
+    const accentText = usAccent;
 
     return Container(
       width: double.infinity,
